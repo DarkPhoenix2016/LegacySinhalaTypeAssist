@@ -67,7 +67,8 @@ namespace SinhalaTypeBypasser
 
         public void LoadMasterDictionary()
         {
-            var assembly = Assembly.GetExecutingAssembly();
+            //Embedded Data List
+            /*var assembly = Assembly.GetExecutingAssembly();
             string resourceName = "SinhalaTypeBypasser.Assets.data_list.json";
 
             using Stream? stream = assembly.GetManifestResourceStream(resourceName);
@@ -75,7 +76,16 @@ namespace SinhalaTypeBypasser
                 throw new FileNotFoundException($"Could not find embedded master dictionary: {resourceName}");
 
             using StreamReader reader = new StreamReader(stream);
-            string json = reader.ReadToEnd();
+            string json = reader.ReadToEnd();*/
+
+            //Separate Assest DataList
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "data_list.json");
+            if (!File.Exists(path))
+                throw new FileNotFoundException($"Could not find master dictionary at: {path}");
+
+            string json = File.ReadAllText(path);
+
+
             _entries = JsonSerializer.Deserialize<List<SinhalaMapEntry>>(json) ?? new();
 
             _wijeUniSorted.Clear();

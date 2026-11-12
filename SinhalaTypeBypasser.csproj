@@ -16,14 +16,25 @@
 
     <!-- Single-file standalone publish settings -->
     <PublishSingleFile>true</PublishSingleFile>
+    <!--
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    
+    -->
+    
   </PropertyGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="icon.ico" />
-    <EmbeddedResource Include="Assets\data_list.json" />
+    <!--EmbeddedResource Include="Assets\data_list.json" /-->
   </ItemGroup>
+  
+  <ItemGroup>
+    <None Update="Assets\data_list.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  
 </Project>
