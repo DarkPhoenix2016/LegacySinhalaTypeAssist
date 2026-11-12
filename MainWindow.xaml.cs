@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-
+using Microsoft.Win32;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -13,6 +13,7 @@ using Forms = System.Windows.Forms;
 using WpfMessageBox = System.Windows.MessageBox;
 using WpfColor = System.Windows.Media.Color;
 using WpfBrush = System.Windows.Media.Brush;
+using System.IO;
 
 namespace SinhalaTypeBypasser
 {
@@ -55,6 +56,10 @@ namespace SinhalaTypeBypasser
             OutputFontFamily.Unicode
         };
 
+        private const string StartupRegistryPath =@"Software\Microsoft\Windows\CurrentVersion\Run";
+
+        private const string StartupValueName ="SinhalaTypingAssistant";
+
         // ==========================================
         // CORE COMPONENTS
         // ==========================================
@@ -69,6 +74,7 @@ namespace SinhalaTypeBypasser
         private Forms.NotifyIcon? _notifyIcon;
         private Forms.ContextMenuStrip? _trayMenu;
         private Forms.ToolStripMenuItem? _trayStatusItem;
+        private System.Drawing.Icon? _appIcon;
 
         // Application state
         private bool _isClosing;
@@ -383,6 +389,7 @@ namespace SinhalaTypeBypasser
 
         private void InitializeTrayIcon()
         {
+
             // Show Toolbar
             var showItem = new Forms.ToolStripMenuItem(
                 "Show Toolbar"
@@ -402,6 +409,37 @@ namespace SinhalaTypeBypasser
             _trayStatusItem.Click += (s, e) =>
                 Dispatcher.Invoke(ToggleTypingAssist);
 
+
+            // Run at Windows startup
+            var startupItem = new Forms.ToolStripMenuItem(
+                "Run at Windows startup"
+            )
+            {
+                Checked = IsStartupEnabled()
+            };
+
+            startupItem.Click += (s, e) =>
+            {
+                try
+                {
+                    bool enable = !IsStartupEnabled();
+
+                    SetStartupEnabled(enable);
+
+                    startupItem.Checked = enable;
+                }
+                catch (Exception ex)
+                {
+                    WpfMessageBox.Show(
+                        ex.Message,
+                        "Startup Settings Error",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error
+                    );
+                }
+            };
+
+
             // Exit
             var exitItem = new Forms.ToolStripMenuItem(
                 "Exit"
@@ -415,7 +453,7 @@ namespace SinhalaTypeBypasser
 
             _trayMenu.Items.Add(showItem);
             _trayMenu.Items.Add(_trayStatusItem);
-
+            _trayMenu.Items.Add(startupItem);
             _trayMenu.Items.Add(
                 new Forms.ToolStripSeparator()
             );
@@ -423,10 +461,17 @@ namespace SinhalaTypeBypasser
             _trayMenu.Items.Add(exitItem);
 
             // Notification icon
+            _appIcon = new System.Drawing.Icon(
+                System.IO.Path.Combine(
+                    AppContext.BaseDirectory,
+                    "icon.ico"
+                )
+            );
+
             _notifyIcon = new Forms.NotifyIcon
             {
-                Icon = System.Drawing.SystemIcons.Application,
-                Text = "Sinhala Typing Assistant",
+                Icon = _appIcon,
+                Text = "Legacy Sinhala Typing Assistant",
                 ContextMenuStrip = _trayMenu,
                 Visible = true
             };
@@ -434,6 +479,7 @@ namespace SinhalaTypeBypasser
             // Double-click to reveal toolbar
             _notifyIcon.DoubleClick += (s, e) =>
                 Dispatcher.Invoke(ExpandToolbar);
+
         }
 
         // ==========================================
@@ -472,6 +518,9 @@ namespace SinhalaTypeBypasser
                 _notifyIcon.Dispose();
                 _notifyIcon = null;
             }
+
+            _appIcon?.Dispose();
+            _appIcon = null;
 
             // Dispose tray menu
             _trayMenu?.Dispose();
@@ -577,5 +626,67 @@ namespace SinhalaTypeBypasser
             int nIndex,
             IntPtr dwNewLong
         );
+
+
+
+        // ==========================================
+        // Start up
+        // ==========================================
+
+        private bool IsStartupEnabled()
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(
+                StartupRegistryPath
+            );
+
+            return key?.GetValue(StartupValueName) != null;
+        }
+
+        private void SetStartupEnabled(bool enabled)
+        {
+            using var key = Registry.CurrentUser.CreateSubKey(
+                StartupRegistryPath
+            );
+
+            if (enabled)
+            {
+                string? processPath = Environment.ProcessPath;
+
+                if (string.IsNullOrWhiteSpace(processPath))
+                    throw new InvalidOperationException(
+                        "Unable to determine application path."
+                    );
+
+                string command;
+
+                if (Path.GetFileName(processPath).Equals(
+                    "dotnet.exe",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    string assemblyPath =
+                        System.Reflection.Assembly.GetEntryAssembly()?.Location
+                        ?? "";
+
+                    if (string.IsNullOrWhiteSpace(assemblyPath))
+                        throw new InvalidOperationException(
+                            "Unable to determine application assembly path."
+                        );
+
+                    command = $"\"{processPath}\" \"{assemblyPath}\"";
+                }
+                else
+                {
+                    command = $"\"{processPath}\"";
+                }
+
+                key.SetValue(StartupValueName, command);
+            }
+            else
+            {
+                key.DeleteValue(StartupValueName, false);
+            }
+        }
+
     }
 }
+
