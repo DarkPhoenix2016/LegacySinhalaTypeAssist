@@ -5,7 +5,9 @@ Wijesekara keyboard layouts or phonetic Singlish input. It converts
 keystrokes in real time and can output Sinhala in legacy font encodings
 or standard Unicode.
 
-![Sinhala Typing Assistant](Assets/SinhalaKeyboard.png)
+<p align="center">
+  <img src="Assets/SinhalaKeyboard.png" alt="Sinhala keyboard layout" width="200">
+</p>
 
 ## Features
 
