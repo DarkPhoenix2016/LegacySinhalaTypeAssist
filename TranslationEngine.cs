@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Reflection;
 
 namespace SinhalaTypeBypasser
 {
@@ -66,11 +67,15 @@ namespace SinhalaTypeBypasser
 
         public void LoadMasterDictionary()
         {
-            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "data_list.json");
-            if (!File.Exists(path))
-                throw new FileNotFoundException($"Could not find master dictionary at: {path}");
+            var assembly = Assembly.GetExecutingAssembly();
+            string resourceName = "SinhalaTypeBypasser.Assets.data_list.json";
 
-            string json = File.ReadAllText(path);
+            using Stream? stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream == null)
+                throw new FileNotFoundException($"Could not find embedded master dictionary: {resourceName}");
+
+            using StreamReader reader = new StreamReader(stream);
+            string json = reader.ReadToEnd();
             _entries = JsonSerializer.Deserialize<List<SinhalaMapEntry>>(json) ?? new();
 
             _wijeUniSorted.Clear();

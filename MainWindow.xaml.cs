@@ -7,13 +7,17 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
+using System.IO;
+using System.Reflection;
+
+
 
 // Explicit framework aliases
 using Forms = System.Windows.Forms;
 using WpfMessageBox = System.Windows.MessageBox;
 using WpfColor = System.Windows.Media.Color;
 using WpfBrush = System.Windows.Media.Brush;
-using System.IO;
+
 
 namespace SinhalaTypeBypasser
 {
@@ -461,12 +465,13 @@ namespace SinhalaTypeBypasser
             _trayMenu.Items.Add(exitItem);
 
             // Notification icon
-            _appIcon = new System.Drawing.Icon(
-                System.IO.Path.Combine(
-                    AppContext.BaseDirectory,
-                    "icon.ico"
-                )
-            );
+
+            var assembly = Assembly.GetExecutingAssembly();
+            using Stream? iconStream = assembly.GetManifestResourceStream("SinhalaTypeBypasser.icon.ico");
+            if (iconStream == null)
+                throw new FileNotFoundException("Could not find embedded resource: SinhalaTypeBypasser.icon.ico");
+
+            _appIcon = new System.Drawing.Icon(iconStream);
 
             _notifyIcon = new Forms.NotifyIcon
             {
